@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 성적 관리 시스템</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <span style="font-size:1.75rem">🎓</span>
+  <div>
+    <h1>학생 성적 관리 시스템</h1>
+    <p class="subtitle">Student Grade Management System — Database Programming Project</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="students" onclick="showSection('students')">
+      👨‍🎓 학생 관리
+    </button>
+    <button class="tab-btn" data-tab="stats" onclick="showSection('stats')">
+      📊 통계
+    </button>
+  </div>
+
+  <!-- ── Students Section ─────────────────────────────── -->
+  <div id="section-students" class="section active">
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">학생 목록</h2>
+        <button class="btn btn-primary" onclick="openAddStudentModal()">+ 학생 추가</button>
+      </div>
+
+      <!-- Search / Filter -->
+      <div class="search-bar">
+        <input type="text" id="search-input" class="form-control" placeholder="🔍 이름 또는 학번으로 검색..." />
+        <select id="filter-dept" class="form-control" style="max-width:200px" onchange="loadStudents()">
+          <option value="">전체 학과</option>
+          <option>컴퓨터공학과</option>
+          <option>소프트웨어학과</option>
+          <option>정보보안학과</option>
+          <option>인공지능학과</option>
+        </select>
+        <select id="filter-year" class="form-control" style="max-width:120px" onchange="loadStudents()">
+          <option value="">전체 학년</option>
+          <option value="1">1학년</option>
+          <option value="2">2학년</option>
+          <option value="3">3학년</option>
+          <option value="4">4학년</option>
+        </select>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>학번</th>
+              <th>이름</th>
+              <th>학과</th>
+              <th>학년</th>
+              <th>평균 점수</th>
+              <th>과목 수</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="student-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:2rem">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats Section ────────────────────────────────── -->
+  <div id="section-stats" class="section">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">👨‍🎓</div>
+        <div class="stat-info">
+          <div class="label">전체 학생 수</div>
+          <div class="value" id="stat-students">-</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">📝</div>
+        <div class="stat-info">
+          <div class="label">전체 성적 수</div>
+          <div class="value" id="stat-grades">-</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow">📈</div>
+        <div class="stat-info">
+          <div class="label">전체 평균</div>
+          <div class="value" id="stat-avg">-</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">🏆</div>
+        <div class="stat-info">
+          <div class="label">최고 점수</div>
+          <div class="value" id="stat-high">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem">
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">성적 분포</h2>
+        </div>
+        <div id="grade-distribution"><p style="color:var(--text-muted)">데이터 없음</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🏆 우수 학생 Top 5</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>순위</th><th>이름</th><th>학번</th><th>학과</th><th>평균</th></tr>
+            </thead>
+            <tbody id="top-students"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1">
+        <div class="card-header">
+          <h2 class="card-title">과목별 평균 점수</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>과목명</th><th>수강 인원</th><th>평균 점수</th></tr>
+            </thead>
+            <tbody id="subject-averages"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Student Modal ─────────────────────────────────── -->
+<div id="student-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="student-modal-title">학생 추가</h3>
+      <button class="modal-close" onclick="closeModal('student-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="student-form" onsubmit="return false">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="field-student-id">학번 *</label>
+            <input type="text" id="field-student-id" class="form-control" placeholder="예: 2024001" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="field-name">이름 *</label>
+            <input type="text" id="field-name" class="form-control" placeholder="학생 이름" maxlength="50" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="field-department">학과 *</label>
+            <input type="text" id="field-department" class="form-control" placeholder="예: 컴퓨터공학과" maxlength="100" list="dept-list" />
+            <datalist id="dept-list">
+              <option value="컴퓨터공학과">
+              <option value="소프트웨어학과">
+              <option value="정보보안학과">
+              <option value="인공지능학과">
+              <option value="전자공학과">
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="field-year">학년 *</label>
+            <select id="field-year" class="form-control">
+              <option value="">학년 선택</option>
+              <option value="1">1학년</option>
+              <option value="2">2학년</option>
+              <option value="3">3학년</option>
+              <option value="4">4학년</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('student-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveStudent()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Grades Modal ──────────────────────────────────── -->
+<div id="grades-modal" class="modal-overlay">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="grades-modal-title">성적 관리</h3>
+      <button class="modal-close" onclick="closeModal('grades-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Add / Edit Grade Form -->
+      <div class="card" style="margin-bottom:1rem;background:#f8fafc">
+        <h4 style="margin-bottom:.75rem;font-size:.9375rem" id="grade-form-title">성적 추가</h4>
+        <form id="grade-form" onsubmit="return false">
+          <input type="hidden" id="grade-student-id" />
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">과목명 *</label>
+              <input type="text" id="grade-subject" class="form-control" placeholder="예: 데이터베이스" list="subject-list" />
+              <datalist id="subject-list">
+                <option value="데이터베이스">
+                <option value="웹프로그래밍">
+                <option value="알고리즘">
+                <option value="운영체제">
+                <option value="자료구조">
+                <option value="네트워크">
+                <option value="소프트웨어공학">
+                <option value="머신러닝">
+                <option value="프로그래밍기초">
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">점수 (0~100) *</label>
+              <input type="number" id="grade-score" class="form-control" placeholder="예: 85" min="0" max="100" step="0.1" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">학기 *</label>
+              <input type="text" id="grade-semester" class="form-control" placeholder="예: 2024-1" list="semester-list" />
+              <datalist id="semester-list">
+                <option value="2024-1">
+                <option value="2024-2">
+                <option value="2023-1">
+                <option value="2023-2">
+              </datalist>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <button id="save-grade-btn" class="btn btn-success" onclick="saveGrade()">성적 추가</button>
+            <button class="btn btn-outline" onclick="cancelEditGrade()" style="display:none" id="cancel-edit-grade-btn">취소</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Grades Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>과목</th><th>점수</th><th>등급</th><th>학기</th><th>관리</th></tr>
+          </thead>
+          <tbody id="grades-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('grades-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
