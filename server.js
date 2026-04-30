@@ -1,8 +1,18 @@
 const express = require('express');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: '요청 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.' }
+});
 
 // Middleware
 app.use(express.json());
@@ -10,8 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
-app.use('/api/students', require('./routes/students'));
-app.use('/api/grades', require('./routes/grades'));
+app.use('/api/students', apiLimiter, require('./routes/students'));
+app.use('/api/grades', apiLimiter, require('./routes/grades'));
 
 // Serve frontend
 app.get('/', (req, res) => {

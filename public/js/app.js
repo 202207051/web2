@@ -181,10 +181,6 @@ function cancelEditGrade() {
   $('cancel-edit-grade-btn').style.display = 'none';
 }
 
-function editGradeShowCancel() {
-  $('cancel-edit-grade-btn').style.display = '';
-}
-
 async function saveGrade() {
   const subject = $('grade-subject').value.trim();
   const score = parseFloat($('grade-score').value);
